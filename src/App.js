@@ -8,52 +8,46 @@ function Square({ value, handleClick }) {
   );
 }
 
-export default function Board() {
-  const [squareState, setSquareState] = useState(Array(9).fill(null));
-  const [steps, setSteps] = useState(0);
-  const winner = calcWinner(squareState);
+function Board({ steps, squares, onPlay }) {
+  const winner = calcWinner(squares);
   let status =
     (winner ? "Winner:" : "Next player: ") + (steps % 2 == 0 ? "X" : "O");
 
   function handleClick(i) {
-    const nextSquares = squareState.slice();
+    const nextSquares = squares.slice();
 
-    if (nextSquares[i]) {
+    if (winner || nextSquares[i]) {
       return;
     }
     nextSquares[i] = steps % 2 == 0 ? "O" : "X";
 
-    setSquareState(nextSquares);
-
-    setSteps(steps + 1);
+    onPlay(nextSquares);
   }
 
   return (
     <>
       <div className="status">{status}</div>
-
-      <div className="board-row">
-        <Square value={squareState[0]} handleClick={() => handleClick(0)} />
-        <Square value={squareState[1]} handleClick={() => handleClick(1)} />
-        <Square value={squareState[2]} handleClick={() => handleClick(2)} />
-      </div>
-
-      <div className="board-row">
-        <Square value={squareState[3]} handleClick={() => handleClick(3)} />
-        <Square value={squareState[4]} handleClick={() => handleClick(4)} />
-        <Square value={squareState[5]} handleClick={() => handleClick(5)} />
-      </div>
-
-      <div className="board-row">
-        <Square value={squareState[6]} handleClick={() => handleClick(6)} />
-        <Square value={squareState[7]} handleClick={() => handleClick(7)} />
-        <Square value={squareState[8]} handleClick={() => handleClick(8)} />
-      </div>
+      <ol>
+        {[0, 1, 2].map((row) => {
+          return (
+            <div className="board-row">
+              {[0, 1, 2].map((num) => {
+                return (
+                  <Square
+                    value={squares[row * 3 + num]}
+                    handleClick={() => handleClick(row * 3 + num)}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </ol>
     </>
   );
 }
 
-function calcWinner(squareState) {
+function calcWinner(squares) {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -64,13 +58,48 @@ function calcWinner(squareState) {
     [0, 4, 8],
     [2, 4, 6],
   ];
-  for (let line of lines){
+  for (let line of lines) {
     if (
-      squareState[line[0]] == squareState[line[1]] &&
-      squareState[line[1]] == squareState[line[2]] &&
-      squareState[line[0]]
+      squares[line[0]] == squares[line[1]] &&
+      squares[line[1]] == squares[line[2]] &&
+      squares[line[0]]
     )
-    return true
+      return true;
   }
   return false;
+}
+
+export default function Game() {
+  const [steps, setSteps] = useState(0);
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const squares = history[steps];
+
+  function handlePlay(nextSquares) {
+    setSteps(steps + 1);
+    setHistory([...history.slice(0, steps + 1), nextSquares]);
+  }
+
+  function jumpTo(nextMove) {
+    setSteps(nextMove);
+  }
+
+  const moves = history.map((squares, move) => {
+    const description = move ? "Go to move #" + move : "Go to game start";
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="board">
+        <Board steps={steps} squares={squares} onPlay={handlePlay}></Board>
+      </div>
+      <div className="info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
 }
