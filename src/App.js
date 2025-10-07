@@ -8,18 +8,14 @@ function Square({ value, handleClick }) {
   );
 }
 
-function Board({ steps, squares, onPlay }) {
-  const winner = calcWinner(squares);
-  let status =
-    (winner ? "Winner:" : "Next player: ") + (steps % 2 == 0 ? "X" : "O");
-
+function Board({ squares, onPlay, status, winner }) {
   function handleClick(i) {
     const nextSquares = squares.slice();
 
     if (winner || nextSquares[i]) {
       return;
     }
-    nextSquares[i] = steps % 2 == 0 ? "O" : "X";
+    nextSquares[i] = status[status.length - 1];
 
     onPlay(nextSquares);
   }
@@ -27,7 +23,7 @@ function Board({ steps, squares, onPlay }) {
   return (
     <>
       <div className="status">{status}</div>
-      <ol>
+      <ul>
         {[0, 1, 2].map((row) => {
           return (
             <div className="board-row">
@@ -42,7 +38,7 @@ function Board({ steps, squares, onPlay }) {
             </div>
           );
         })}
-      </ol>
+      </ul>
     </>
   );
 }
@@ -58,7 +54,7 @@ function calcWinner(squares) {
     [0, 4, 8],
     [2, 4, 6],
   ];
-  for (let line of lines) {
+  for (const line of lines) {
     if (
       squares[line[0]] == squares[line[1]] &&
       squares[line[1]] == squares[line[2]] &&
@@ -73,6 +69,9 @@ export default function Game() {
   const [steps, setSteps] = useState(0);
   const [history, setHistory] = useState([Array(9).fill(null)]);
   const squares = history[steps];
+  const winner = calcWinner(squares);
+  const status =
+    (winner ? "Winner:" : "Next player: ") + (steps % 2 == 0 ? "X" : "O");
 
   function handlePlay(nextSquares) {
     setSteps(steps + 1);
@@ -95,7 +94,13 @@ export default function Game() {
   return (
     <div className="game">
       <div className="board">
-        <Board steps={steps} squares={squares} onPlay={handlePlay}></Board>
+        <Board
+          steps={steps}
+          squares={squares}
+          onPlay={handlePlay}
+          status={status}
+          winner={winner}
+        />
       </div>
       <div className="info">
         <ol>{moves}</ol>
